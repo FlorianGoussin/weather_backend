@@ -1,4 +1,4 @@
-module github.com/weather-backend
+module floriangoussin.com/weather-backend
 
 go 1.21.7
 
