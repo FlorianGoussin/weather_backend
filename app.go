@@ -9,6 +9,7 @@ import (
   "context"
   "go.mongodb.org/mongo-driver/bson"
   "strings"
+  // "fmt"
 )
 
 func main() {
@@ -18,9 +19,9 @@ func main() {
 
   r := gin.Default()
 
-  r.GET("/", func(c *gin.Context) {
-    c.JSON(http.StatusOK, gin.H{"data": "Root route"})    
-  })
+  // r.GET("/", func(c *gin.Context) {
+  //   c.JSON(http.StatusOK, gin.H{"data": "Root route"})    
+  // })
 
   // Return city suggestions based on the search terms
   r.GET("/cities", handleAutocomplete)
@@ -57,9 +58,16 @@ func handleAutocomplete(c *gin.Context) {
     // Check if the value stored in the "name" field is actually a string
     name, ok := result["name"].(string)
     if !ok {
-        // Handle the case where the "name" field is not a string
-        log.Println("Name field is not a string")
-        continue // Skip this iteration and move to the next document
+      // Handle the case where the "name" field is not a string
+      // var typeName string
+      // if result["name"] != nil {
+      //     typeName = fmt.Sprintf("%T", result["name"])
+      // } else {
+      //     typeName = "nil"
+      // }
+      // log.Printf("Name field (%s) is not a string\n", typeName)
+      // log.Printf("Result record: %+v\n", result)
+      continue // Skip this iteration and move to the next document
     }
     if strings.HasPrefix(strings.ToLower(name), strings.ToLower(searchTerm)) {
 			suggestions = append(suggestions, result)

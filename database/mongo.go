@@ -1,9 +1,10 @@
 package database
 
-import(
+import (
 	"context"
 	"log"
 	"os"
+
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -16,9 +17,8 @@ var (
 func Connect() *mongo.Database {
 	mongoUri := os.Getenv("MONGODB_URI")
   if mongoUri == "" {
-    log.Fatal("You must set your 'MONGODB_URI' environment variable. See\n\t https://www.mongodb.com/docs/drivers/go/current/usage-examples/#environment-variable")
+    log.Fatal("'MONGODB_URI' environment variable not set!")
 	}
-
 	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
   clientOptions := options.Client().
       ApplyURI(mongoUri).
@@ -27,7 +27,9 @@ func Connect() *mongo.Database {
 	if err != nil { 
 		log.Fatal(err) 
 	}
-	return client.Database("Weather")
+	// initializeDatabase will create Weather database and
+	// the Cities collection with preloaded data
+	return initializeDatabase(client)
 }
 
 func Disconnect() {

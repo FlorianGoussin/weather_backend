@@ -1,0 +1,31 @@
+version: '3.8'
+services:
+  db:
+    image: 'mongo:7.0.5'
+    container_name: mongo
+    restart: on-failure
+    ports:
+      - 27018:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=Weather
+  db-admin-panel:
+    image: 'mongo-express:1.0.2'
+    restart: on-failure
+    ports:
+      - 8082:8081
+    environment:
+      - ME_CONFIG_BASICAUTH_USERNAME=${MONGODB_ADMINUSERNAME}
+      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGODB_ADMINPASSWORD}
+      - ME_CONFIG_MONGODB_URL=mongodb://${MONGO_ROOT_USERNAME}:${MONGO_ROOT_PASSWORD}@db:27017/
+    depends_on:
+      - db
+  app:
+    build: ./
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    volumes:
+      - ./cities.json:/cities.json
