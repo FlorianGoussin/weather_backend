@@ -14,8 +14,23 @@ var (
 	err error
 )
 
+func isRunningInContainer() bool {
+	if _, err := os.Stat("/.dockerenv"); err != nil {
+			return false
+	}
+	return true
+}
+
 func Connect() *mongo.Database {
-	mongoUri := os.Getenv("MONGODB_URI")
+	mongoUriEnv := func() string { 
+		if isRunningInContainer() { 
+			return "MONGODB_URI_CONTAINER" 
+		} else {
+			return "MONGODB_URI"
+		}
+	}()
+	mongoUri := os.Getenv(mongoUriEnv)
+	
 	mongoUsername := os.Getenv("MONGO_ROOT_USERNAME")
 	mongoPassword := os.Getenv("MONGO_ROOT_PASSWORD")
 	if mongoUri == "" {
@@ -29,10 +44,10 @@ func Connect() *mongo.Database {
 	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
   clientOptions := options.Client().
       ApplyURI(mongoUri).
-			SetAuth(options.Credential{
-				Username: mongoUsername,
-				Password: mongoPassword,
-			}).
+			// SetAuth(options.Credential{
+			// 	Username: mongoUsername,
+			// 	Password: mongoPassword,
+			// }).
       SetServerAPIOptions(serverAPIOptions)
 	client, err = mongo.Connect(context.Background(), clientOptions)
 	if err != nil { 
@@ -40,8 +55,8 @@ func Connect() *mongo.Database {
 	}
 	// initializeDatabase will create Weather database and
 	// the Cities collection with preloaded data
-	// return initializeDatabase(client)
-	return client.Database("Weather")
+	return initializeDatabase(client)
+	// return client.Database("Weather")
 }
 
 func Disconnect() {

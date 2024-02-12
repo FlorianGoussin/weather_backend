@@ -20,9 +20,6 @@ import (
 // }
 
 func main() {
-  log.Println("App - main function started!")
-
-
   if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found")
 	}
@@ -38,7 +35,7 @@ func main() {
   })
 
   // Return city suggestions based on the search terms
-  // r.GET("/cities", handleAutocomplete)
+  r.GET("/cities", handleAutocomplete)
 
   // restrictedPage := r.Group("/")
   // restrictedPage.Use(middlewares.IPWhiteListMiddleware(IPWhitelist))
@@ -55,8 +52,8 @@ func handleAutocomplete(c *gin.Context) {
   weatherDatabase := database.Connect()
 
   searchTerm := c.Query("searchTerm")
+  log.Println("handleAutocomplete searchTerm", searchTerm)
 
-  // c.JSON(http.StatusOK, gin.H{"data": "Cities autocomplete"})    
   collection := weatherDatabase.Collection("Cities")
 
   // Fetch all documents from the collection
@@ -76,21 +73,7 @@ func handleAutocomplete(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-
-    // Check if the value stored in the "name" field is actually a string
-    name, ok := result["name"].(string)
-    if !ok {
-      // Handle the case where the "name" field is not a string
-      // var typeName string
-      // if result["name"] != nil {
-      //     typeName = fmt.Sprintf("%T", result["name"])
-      // } else {
-      //     typeName = "nil"
-      // }
-      // log.Printf("Name field (%s) is not a string\n", typeName)
-      // log.Printf("Result record: %+v\n", result)
-      continue // Skip this iteration and move to the next document
-    }
+    name, _ := result["name"].(string)
     if strings.HasPrefix(strings.ToLower(name), strings.ToLower(searchTerm)) {
 			suggestions = append(suggestions, result)
 		}
