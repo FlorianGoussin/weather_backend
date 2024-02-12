@@ -2,9 +2,11 @@ package database
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
 	jsoniter "github.com/json-iterator/go"
@@ -15,24 +17,36 @@ type City struct {
 	Country string `json:"country"`
 }
 
+func dbHasCollection(db *mongo.Database, collectionName string) bool {
+	coll, _ := db.ListCollectionNames(context.Background(), bson.D{{Key: "name", Value: collectionName}})
+	return len(coll) == 1
+}
+
 // Create Weather database if there is none
 func initializeDatabase(client *mongo.Client) *mongo.Database {
 	database := client.Database("Weather")
-	collection := database.Collection("Cities") // Create collection if !exists
-	count, _ := collection.CountDocuments(context.Background(), nil)
-	if (count == 0) {
+	collectionName := "Cities"
+	collectionExists := dbHasCollection(database, collectionName)
+	if !collectionExists {
+		collection := database.Collection(collectionName)
+
 		// Insert cities from json file
-		err = insertCitiesFromDataset(client)
+		err = insertCitiesFromDataset(collection)
 		if err != nil {
-			log.Fatal(err)
+			log.Panic(err)
 		}
-		log.Println("Create and add data to collection 'Cities'")
+		log.Println("insertCitiesFromDataset done")
+		// Create index in ascending order on the name field
+		if err = createIndex(collection, "name", 1); err != nil {
+			log.Panic(err)
+		}
+		log.Println("createIndex Cities 'name' done")
 	}
 	// Return the Weather database
 	return database
 }
 
-func insertCitiesFromDataset(client *mongo.Client) error {
+func insertCitiesFromDataset(collection *mongo.Collection) error {
 	// Read cities.json file
 	data, err := os.ReadFile("data.json")
 	if err != nil {
@@ -50,10 +64,21 @@ func insertCitiesFromDataset(client *mongo.Client) error {
 			cityInterfaces = append(cityInterfaces, city)
 	}
 	// Insert cities into MongoDB
-	collection := client.Database("Weather").Collection("Cities")
 	_, err = collection.InsertMany(context.Background(), cityInterfaces)
 	if err != nil {
 			return err
 	}
 	return nil // no error
+}
+
+func createIndex(collection *mongo.Collection, fieldName string, order int) error {
+	indexModel := mongo.IndexModel{
+    Keys: bson.D{{Key: fieldName, Value: order}},
+	}
+	name, err := collection.Indexes().CreateOne(context.TODO(), indexModel)
+	if err != nil {
+			return err
+	}
+	fmt.Println("Name of Index Created: " + name)
+	return nil
 }
