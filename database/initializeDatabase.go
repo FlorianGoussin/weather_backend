@@ -23,7 +23,7 @@ func dbHasCollection(db *mongo.Database, collectionName string) bool {
 }
 
 // Create Weather database if there is none
-func initializeDatabase(client *mongo.Client) *mongo.Database {
+func Initialize(client *mongo.Client) *mongo.Database {
 	database := client.Database("Weather")
 	collectionName := "Cities"
 	collectionExists := dbHasCollection(database, collectionName)

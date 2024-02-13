@@ -10,7 +10,6 @@ import (
 )
 
 var (
-	client *mongo.Client
 	err error
 )
 
@@ -21,7 +20,7 @@ func isRunningInContainer() bool {
 	return true
 }
 
-func Connect() *mongo.Database {
+func Connect() *mongo.Client {
 	mongoUriEnv := func() string { 
 		if isRunningInContainer() { 
 			return "MONGODB_URI_CONTAINER" 
@@ -30,7 +29,7 @@ func Connect() *mongo.Database {
 		}
 	}()
 	mongoUri := os.Getenv(mongoUriEnv)
-	
+
 	mongoUsername := os.Getenv("MONGO_ROOT_USERNAME")
 	mongoPassword := os.Getenv("MONGO_ROOT_PASSWORD")
 	if mongoUri == "" {
@@ -44,21 +43,14 @@ func Connect() *mongo.Database {
 	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
   clientOptions := options.Client().
       ApplyURI(mongoUri).
-			// SetAuth(options.Credential{
-			// 	Username: mongoUsername,
-			// 	Password: mongoPassword,
-			// }).
       SetServerAPIOptions(serverAPIOptions)
-	client, err = mongo.Connect(context.Background(), clientOptions)
+	client, err := mongo.Connect(context.Background(), clientOptions)
 	if err != nil { 
 		log.Fatal(err) 
 	}
-	// initializeDatabase will create Weather database and
-	// the Cities collection with preloaded data
-	return initializeDatabase(client)
-	// return client.Database("Weather")
+	return client
 }
 
-func Disconnect() {
+func Disconnect(client *mongo.Client) {
 	client.Disconnect(context.Background())
 }
