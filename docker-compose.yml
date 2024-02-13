@@ -32,6 +32,5 @@ services:
       - db
     volumes:
       - ./data.json:/data.json
-      - ./mongo-seed:/mongo-seed
     env_file:
       - .env
