@@ -6,29 +6,23 @@ import (
 	"log"
 	"os"
 
+	models "floriangoussin.com/weather-backend/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
 	jsoniter "github.com/json-iterator/go"
 )
 
-type City struct {
-	Name    string `json:"name"`
-	Country string `json:"country"`
-}
-
-func dbHasCollection(db *mongo.Database, collectionName string) bool {
-	coll, _ := db.ListCollectionNames(context.Background(), bson.D{{Key: "name", Value: collectionName}})
-	return len(coll) == 1
-}
+const COLLECTION_NAME = "Cities"
+const DATA_FILE = "data.json"
 
 // Create Weather database if there is none
 func Initialize(client *mongo.Client) *mongo.Database {
-	database := client.Database("Weather")
-	collectionName := "Cities"
-	collectionExists := dbHasCollection(database, collectionName)
+	databaseName := os.Getenv("DATABASE_NAME")
+	database := client.Database(databaseName)
+	collectionExists := CollectionExists(database, COLLECTION_NAME)
 	if !collectionExists {
-		collection := database.Collection(collectionName)
+		collection := database.Collection(COLLECTION_NAME)
 
 		// Insert cities from json file
 		err = insertCitiesFromDataset(collection)
@@ -48,11 +42,11 @@ func Initialize(client *mongo.Client) *mongo.Database {
 
 func insertCitiesFromDataset(collection *mongo.Collection) error {
 	// Read cities.json file
-	data, err := os.ReadFile("data.json")
+	data, err := os.ReadFile(DATA_FILE)
 	if err != nil {
 			return err
 	}
-	var cities []City
+	var cities []models.City
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	if err = json.Unmarshal(data, &cities); err != nil {
 		return err

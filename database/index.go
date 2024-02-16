@@ -5,12 +5,14 @@ import (
 	"log"
 	"os"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var (
 	err error
+	Client *mongo.Client
 )
 
 func isRunningInContainer() bool {
@@ -20,7 +22,8 @@ func isRunningInContainer() bool {
 	return true
 }
 
-func Connect() *mongo.Client {
+// func Connect() *mongo.Client {
+func Connect() {
 	mongoUriEnv := func() string { 
 		if isRunningInContainer() { 
 			return "MONGODB_URI_CONTAINER" 
@@ -42,9 +45,20 @@ func Connect() *mongo.Client {
 	if err != nil { 
 		log.Fatal(err) 
 	}
-	return client
+	Client = client
 }
 
-func Disconnect(client *mongo.Client) {
-	client.Disconnect(context.Background())
+func Disconnect() {
+	Client.Disconnect(context.Background())
+}
+
+func GetCollection(client *mongo.Client, collectionName string) *mongo.Collection {
+	databaseName := os.Getenv("DATABASE_NAME")
+	var collection *mongo.Collection = client.Database(databaseName).Collection(collectionName)
+	return collection
+}
+
+func CollectionExists(db *mongo.Database, collectionName string) bool {
+	coll, _ := db.ListCollectionNames(context.Background(), bson.D{{Key: "name", Value: collectionName}})
+	return len(coll) == 1
 }

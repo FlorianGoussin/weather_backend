@@ -2,73 +2,66 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-	"floriangoussin.com/weather-backend/database"
+	database "floriangoussin.com/weather-backend/database"
+	routes "floriangoussin.com/weather-backend/routes"
+
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func main() {
   if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found")
 	}
-  // InitializeDatabase will create Weather database and
-	// the Cities collection with preloaded data
-  client := database.Connect()
-  database.Initialize(client)
-  database.Disconnect(client)
-
   // Get engine
-  engine := gin.Default()
+  router := gin.New()
+  router.Use(gin.Logger())
+  router.ForwardedByClientIP = true
+  router.SetTrustedProxies([]string{"127.0.0.1"})
+  routes.InitializeRoutes(router)
 
-  // Return city suggestions based on the search terms
-  engine.GET("/cities", handleAutocomplete)
-
-  engine.Run()
-}
-
-func handleAutocomplete(c *gin.Context) {
-  client := database.Connect()
-
-  // Open connection
-  collection := client.Database("Weather").Collection("Cities")
-
-  searchTerm := c.Query("searchTerm")
-  log.Println("handleAutocomplete searchTerm", searchTerm)
-
-  // Define a filter to search for suggestions based on the searchTerm in the "name" field
-  pattern := fmt.Sprintf("^%s", searchTerm)
-  filter := bson.M{"name": bson.M{"$regex": primitive.Regex{Pattern: pattern, Options: "i"}}}
-
-  // Execute the find operation
-  cursor, err := collection.Find(context.Background(), filter)
-  if err != nil {
-      c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-      return
-  }
-  defer cursor.Close(context.Background())
-
-  // Decode results
-  log.Println("Number of results:", cursor.RemainingBatchLength())
-	// var results []bson.M
-	var results []database.City
-	if err := cursor.All(context.Background(), &results); err != nil {
-		log.Fatal(err)
-    return
+  appPort := os.Getenv("PORT")
+	if appPort == "" {
+		appPort = "8080"
+	}
+  // router.Run(":" + appPort)
+  // Create a server instance with a timeout
+	server := &http.Server{
+		Addr: ":" + appPort,
+		Handler: router,
 	}
 
-  // Close connection
-  defer database.Disconnect(client)
+  // InitializeDatabase will create Weather database and
+	// the Cities collection with preloaded data
+  database.Connect()
+  database.Initialize(database.Client)
 
-  // Return the suggestions
-  c.JSON(http.StatusOK, gin.H{
-    "message": "Cities suggestions",
-    "searchTerm": searchTerm,
-    "suggestions": results,
-  })
+  // Handle graceful shutdown
+  go func() {
+    quit := make(chan os.Signal, 1) // Create channel
+    signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+    <-quit
+    log.Println("Shutting down gracefully")
+
+    // Create a context with a timeout
+    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+    defer cancel()
+
+    // Close db connection
+    database.Disconnect()
+
+    // Shutdown the server
+    if err := server.Shutdown(ctx); err != nil {
+        log.Fatalf("Server shutdown failed: %v", err)
+    }
+
+    log.Println("Server gracefully stopped")
+  }()
 }
