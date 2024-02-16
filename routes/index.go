@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Init(router *gin.RouterGroup) {
-	initGroup := router.Group("/") 
+func Init(api *gin.RouterGroup) {
+	initGroup := api.Group("/") 
 	initGroup.Use(middlewares.CheckApiKey()) 
 	{
 		initGroup.POST("/register", controllers.Register)
@@ -15,8 +15,8 @@ func Init(router *gin.RouterGroup) {
 	}
 }
 
-func Protected(router *gin.RouterGroup) {
-	protectedGroup := router.Group("/")
+func Protected(api *gin.RouterGroup) {
+	protectedGroup := api.Group("/")
 	protectedGroup.Use(middlewares.CheckApiKey())
 	protectedGroup.Use(middlewares.Authenticate())
 	{
