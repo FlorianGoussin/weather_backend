@@ -7,19 +7,20 @@ import (
 )
 
 func Init(router *gin.RouterGroup) {
-	auth := router.Group("/auth") 
-	auth.Use(middlewares.CheckApiKey()) 
+	initGroup := router.Group("/") 
+	initGroup.Use(middlewares.CheckApiKey()) 
 	{
-		auth.POST("/register", controllers.Register)
-		auth.POST("/login", controllers.Login)
+		initGroup.POST("/register", controllers.Register)
+		initGroup.POST("/login", controllers.Login)
 	}
 }
 
 func Protected(router *gin.RouterGroup) {
-	api := router.Group("/")
-	api.Use(middlewares.Authenticate())
+	protectedGroup := router.Group("/")
+	protectedGroup.Use(middlewares.CheckApiKey())
+	protectedGroup.Use(middlewares.Authenticate())
 	{
 		// Return city suggestions based on the search terms
-		router.GET("/cities", controllers.Autocomplete)
+		protectedGroup.GET("/cities", controllers.Autocomplete)
 	}
 }
