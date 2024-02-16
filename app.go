@@ -25,7 +25,7 @@ func main() {
   router.Use(gin.Logger())
   router.ForwardedByClientIP = true
   router.SetTrustedProxies([]string{"127.0.0.1"})
-  routes.InitializeRoutes(router)
+  routes.Init(router)
 
   appPort := os.Getenv("PORT")
 	if appPort == "" {

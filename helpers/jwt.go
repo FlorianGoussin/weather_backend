@@ -27,11 +27,9 @@ var userCollection *mongo.Collection = database.GetCollection(database.Client, "
 var SECRET_KEY string = os.Getenv("JWT_SECRET_KEY")
 
 // Generates a token and a refresh token
-func GenerateAllTokens(email string, firstName string, lastName string, uid string) (token string, refreshToken string, err error) {
+func GenerateAllTokens(email string, uid string) (token string, refreshToken string, err error) {
 	claims := &SignedDetails{
 		Email:      email,
-		First_name: firstName,
-		Last_name:  lastName,
 		Uid:        uid,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(24)).Unix(),
