@@ -6,14 +6,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Init(router *gin.Engine) {
-	router.POST("api/register", controllers.Register)
-  router.POST("api/login", controllers.Login)
+func Init(router *gin.RouterGroup) {
+	auth := router.Group("/auth") 
+	auth.Use(middlewares.CheckApiKey()) 
+	{
+		auth.POST("/register", controllers.Register)
+		auth.POST("/login", controllers.Login)
+	}
 }
 
-func Protected(router *gin.Engine) {
-	router.Use(middlewares.Authenticate)
-
-	// Return city suggestions based on the search terms
-  router.GET("api/cities", controllers.Autocomplete)
+func Protected(router *gin.RouterGroup) {
+	api := router.Group("/")
+	api.Use(middlewares.Authenticate())
+	{
+		// Return city suggestions based on the search terms
+		router.GET("/cities", controllers.Autocomplete)
+	}
 }

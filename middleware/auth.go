@@ -2,12 +2,38 @@ package middlewares
 
 import (
 	"net/http"
+	"os"
 
 	helper "floriangoussin.com/weather-backend/helpers"
 	"github.com/gin-gonic/gin"
 )
 
-func Authenticate(c *gin.Context) {
+var clientApiKey = os.Getenv("CLIENT_API_KEY")
+var validAPIKeys = map[string]bool{
+	clientApiKey: true,
+}
+
+func CheckApiKey() gin.HandlerFunc { return _checkApiKey }
+func _checkApiKey(c *gin.Context) {
+	apiKey := c.GetHeader("X-API-Key")
+
+	// Check if API key is provided
+	if apiKey == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "API key is missing"})
+		c.Abort()
+		return
+	}
+
+	// Check if the API key is valid
+	if !validAPIKeys[apiKey] {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid API key"})
+		c.Abort()
+		return
+	}
+}
+
+func Authenticate() gin.HandlerFunc { return _authenticate }
+func _authenticate(c *gin.Context) {
 	clientToken := c.Request.Header.Get("token")
 	if clientToken == "" {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "No Authorization Header Provided"})

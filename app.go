@@ -25,7 +25,10 @@ func main() {
   router.Use(gin.Logger())
   router.ForwardedByClientIP = true
   router.SetTrustedProxies([]string{"127.0.0.1"})
-  routes.Init(router)
+
+  api := router.Group("/api/v1")
+  routes.Init(api)
+  routes.Protected(api)
 
   appPort := os.Getenv("PORT")
 	if appPort == "" {
