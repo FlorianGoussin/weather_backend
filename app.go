@@ -27,6 +27,13 @@ func main() {
   router.SetTrustedProxies([]string{"127.0.0.1"})
 
   api := router.Group("/api/v1")
+  api.GET("/", func (c *gin.Context)  {
+    responseData := gin.H{
+      "message": "Success",
+    }
+    // Return the JSON response with status code 200
+    c.JSON(http.StatusOK, responseData)
+  })
   routes.Init(api)
   routes.Protected(api)
 
