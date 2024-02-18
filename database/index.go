@@ -28,7 +28,7 @@ func Connect() {
 		if isRunningInContainer() { 
 			return "MONGODB_URI_CONTAINER" 
 		} else {
-			return "MONGODB_URI"
+			return "MONGODB_REMOTE_URI"
 		}
 	}()
 	mongoUri := os.Getenv(mongoUriEnv)
