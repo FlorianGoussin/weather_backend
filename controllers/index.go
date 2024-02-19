@@ -14,6 +14,27 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type Error struct {
+  Code    int    `json:"code"`
+  Message string `json:"message"`
+}
+
+type SuccessResponse struct {
+    Message     string        `json:"message"`
+    SearchTerm  string        `json:"searchTerm"`
+    Suggestions []models.City `json:"suggestions"`
+}
+
+// Autocomplete godoc
+// @Summary      Autocomplete cities
+// @Description  Autocomplete cities based on a search term
+// @Tags         autocomplete cities city
+// @Accept       json
+// @Produce      json
+// @Param        searchTerm    query    string    true    "Search term for autocompletion"
+// @Success      200  {object}  SuccessResponse
+// @Failure      500  {object}  Error
+// @Router       /cities [get]
 func Autocomplete(c *gin.Context) {
 	client := database.Client
   citiesCollection := client.Database("Weather").Collection("Cities")
@@ -44,10 +65,12 @@ func Autocomplete(c *gin.Context) {
     return
 	}
 
+  response := SuccessResponse{
+    Message:     "Cities suggestions",
+    SearchTerm:  searchTerm,
+    Suggestions: results,
+  }
+
   // Return the suggestions
-  c.JSON(http.StatusOK, gin.H{
-    "message": "Cities suggestions",
-    "searchTerm": searchTerm,
-    "suggestions": results,
-  })
+  c.JSON(http.StatusOK, response)
 }

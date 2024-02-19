@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"log"
 	"net/http"
 	"os"
 
@@ -23,9 +22,7 @@ func _checkApiKey(c *gin.Context) {
 		c.Abort()
 		return
 	}
-log.Println("apiKey:", apiKey)
-log.Println("clientApiKey:", clientApiKey)
-log.Println("validAPIKeys:", validAPIKeys)
+
 	// Check if the API key is valid
 	if !validAPIKeys[apiKey] {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid API key"})

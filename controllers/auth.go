@@ -37,6 +37,18 @@ func VerifyPassword(userPassword string, providedPassword string) (bool, string)
 	return check, msg
 }
 
+// Register godoc
+// @Summary      Register user
+// @Description  Register a new user with email and password
+// @Tags         register mobile app user
+// @Accept       json
+// @Produce      json
+// @Param        email body string true "User's email address" format(email)
+// @Param        password body string true "User's password"
+// @Success      200  {string} string "Successfully registered, inserted document ID returned"
+// @Failure      400  {string} http.StatusBadRequest "Bad request"
+// @Failure      500  {string} http.StatusInternalServerError "Internal Server Error"
+// @Router       /register [get]
 func Register(c *gin.Context) {
 	userCollection := database.GetCollection(database.Client, "user")
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
@@ -84,6 +96,17 @@ func Register(c *gin.Context) {
 	c.JSON(http.StatusOK, resultInsertionNumber)
 }
 
+// @Summary Login a user
+// @Description Logs in a registered user and generates tokens
+// @Accept json
+// @Produce json
+// @Param email body string true "User's email address"
+// @Param password body string true "User's password"
+// @Success 200 {object} models.User "Successfully logged in"
+// @Failure 400 {string} http.StatusBadRequest "Bad request"
+// @Failure 401 {string} http.StatusUnauthorized "Unauthorized"
+// @Failure 500 {string} http.StatusInternalServerError "Internal Server Error"
+// @Router /login [post]
 func Login(c *gin.Context) {
 	userCollection := database.GetCollection(database.Client, "user")
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
