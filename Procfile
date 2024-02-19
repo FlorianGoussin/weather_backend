@@ -1,1 +1,1 @@
-web: floriang-weather-api
+web: echo "Debugging issue with go app api wip..."
