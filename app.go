@@ -5,9 +5,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+
 	"os/signal"
 	"syscall"
-	"time"
+
+	// "time"
 
 	database "floriangoussin.com/weather-backend/database"
 	routes "floriangoussin.com/weather-backend/routes"
@@ -53,25 +55,23 @@ func main() {
   database.Connect()
   database.Initialize(database.Client)
 
-  // Handle graceful shutdown
   go func() {
-    quit := make(chan os.Signal, 1) // Create channel
-    signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-    <-quit
-    log.Println("Shutting down gracefully")
-
-    // Create a context with a timeout
-    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-    defer cancel()
-
-    // Close db connection
-    database.Disconnect()
-
-    // Shutdown the server
-    if err := server.Shutdown(ctx); err != nil {
-        log.Fatalf("Server shutdown failed: %v", err)
+    if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+        log.Fatalf("server failed to start: %v", err)
     }
-
-    log.Println("Server gracefully stopped")
   }()
+
+  // Handle shutdown signals
+  sigs := make(chan os.Signal, 1)
+  signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+  <-sigs
+
+  // Close db connection
+  database.Disconnect()
+
+  // Shutdown the server gracefully
+  if err := server.Shutdown(context.Background()); err != nil {
+    log.Printf("server shutdown error: %v", err)
+  }
+
 }

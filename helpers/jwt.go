@@ -11,7 +11,6 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -23,11 +22,9 @@ type SignedDetails struct {
 	jwt.StandardClaims
 }
 
-var userCollection *mongo.Collection = database.GetCollection(database.Client, "user")
-var SECRET_KEY string = os.Getenv("JWT_SECRET_KEY")
-
 // Generates a token and a refresh token
 func GenerateAllTokens(email string, uid string) (token string, refreshToken string, err error) {
+	SECRET_KEY := os.Getenv("JWT_SECRET_KEY")
 	claims := &SignedDetails{
 		Email:      email,
 		Uid:        uid,
@@ -59,6 +56,7 @@ func GenerateAllTokens(email string, uid string) (token string, refreshToken str
 // Returns the claims if token is valid
 // Returns error message if token is not valid
 func ValidateToken(signedToken string)(claims *SignedDetails, msg string) {
+	SECRET_KEY := os.Getenv("JWT_SECRET_KEY")
 	token, err := jwt.ParseWithClaims(
 		signedToken,
 		&SignedDetails{},
@@ -106,6 +104,7 @@ func UpdateAllTokens(signedToken string, signedRefreshToken string, userId strin
 		Upsert: &upsert,
 	}
 
+	userCollection := database.GetCollection(database.Client, "user")
 	_, err := userCollection.UpdateOne(
 		ctx,
 		filter,
