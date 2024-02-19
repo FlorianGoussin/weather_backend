@@ -43,7 +43,6 @@ func Register(c *gin.Context) {
 	defer cancel()
 	
 	var user models.User
-
 	if err := c.BindJSON(&user); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -64,7 +63,7 @@ func Register(c *gin.Context) {
 	if count > 0 {
 		c.JSON(http.StatusInternalServerError, gin.H{"Error": "E-Mail already exists"})
 	}
-
+	
 	password := HashPassword(*user.Password)
 	user.Password = &password
 
@@ -106,12 +105,12 @@ func Login(c *gin.Context) {
 
 	passwordIsValid, msg := VerifyPassword(*user.Password, *foundUser.Password)
 	if !passwordIsValid {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": msg})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": msg})
 			return
 	}
 
 	if foundUser.Email == nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "user not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 	}
 	token, refreshToken, _ := helper.GenerateAllTokens(*foundUser.Email, foundUser.User_id)
 	helper.UpdateAllTokens(token, refreshToken, foundUser.User_id)

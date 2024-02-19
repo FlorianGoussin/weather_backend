@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"log"
 	"net/http"
 	"os"
 
@@ -9,13 +8,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var clientApiKey = os.Getenv("CLIENT_API_KEY")
-var validAPIKeys = map[string]bool{
-	clientApiKey: true,
-}
-
 func CheckApiKey() gin.HandlerFunc { return _checkApiKey }
 func _checkApiKey(c *gin.Context) {
+	clientApiKey := os.Getenv("CLIENT_API_KEY")
+	validAPIKeys := map[string]bool{
+		clientApiKey: true,
+	}
 	apiKey := c.GetHeader("X-API-Key")
 
 	// Check if API key is provided
@@ -26,7 +24,6 @@ func _checkApiKey(c *gin.Context) {
 	}
 
 	// Check if the API key is valid
-	log.Println("validAPIKeys", validAPIKeys)
 	if !validAPIKeys[apiKey] {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid API key"})
 		c.Abort()
@@ -42,7 +39,7 @@ func _authenticate(c *gin.Context) {
 			c.Abort()
 			return
 	}
-
+	
 	claims, err := helper.ValidateToken(clientToken)
 	if err != "" {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
