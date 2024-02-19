@@ -24,6 +24,7 @@ func _checkApiKey(c *gin.Context) {
 		return
 	}
 log.Println("apiKey:", apiKey)
+log.Println("clientApiKey:", clientApiKey)
 log.Println("validAPIKeys:", validAPIKeys)
 	// Check if the API key is valid
 	if !validAPIKeys[apiKey] {
