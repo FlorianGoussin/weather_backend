@@ -41,7 +41,7 @@ func main() {
   // log.Println("GOROOT:", runtime.GOROOT())
   // use ginSwagger middleware to serve the API docs
   router.GET("/", func(c *gin.Context) {
-    c.Redirect(http.StatusMovedPermanently, "/swagger/*any")
+    c.Redirect(http.StatusMovedPermanently, "/swagger/index.html")
   })
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
