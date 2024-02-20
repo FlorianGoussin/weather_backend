@@ -1,1 +1,1 @@
-web: /bin/floriang-weather-api
+web: ./app
