@@ -15,8 +15,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
-	"runtime"
-
 	docs "floriangoussin.com/weather-backend/docs"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -40,14 +38,14 @@ func main() {
 	docs.SwaggerInfo.BasePath = "/api/v1"
 	docs.SwaggerInfo.Schemes = []string{"http", "https"}
 
-  log.Println("GOROOT:", runtime.GOROOT())
+  // log.Println("GOROOT:", runtime.GOROOT())
   // // use ginSwagger middleware to serve the API docs
-  router.GET("/", func(c *gin.Context) {
-    response := make(map[string]interface{})
-    response["message"] = "Welcome to the Gin Go App!"
-    c.JSON(http.StatusOK, response)
-  })
-  // router.GET("/", ginSwagger.WrapHandler(swaggerFiles.Handler))
+  // router.GET("/", func(c *gin.Context) {
+  //   response := make(map[string]interface{})
+  //   response["message"] = "Welcome to the Gin Go App!"
+  //   c.JSON(http.StatusOK, response)
+  // })
+  router.GET("/", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
   api := router.Group("/api/v1")
