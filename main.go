@@ -15,10 +15,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
-	// docs "floriangoussin.com/weather-backend/docs"
-	// swaggerFiles "github.com/swaggo/files"
-	// ginSwagger "github.com/swaggo/gin-swagger"
 	"runtime"
+
+	docs "floriangoussin.com/weather-backend/docs"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
@@ -31,13 +32,13 @@ func main() {
   router.ForwardedByClientIP = true
   router.SetTrustedProxies([]string{"127.0.0.1"})
 
-  // // programmatically set swagger info
-	// docs.SwaggerInfo.Title = "Weather mobile app API"
-	// docs.SwaggerInfo.Description = "Interface between the app and the Weather API. More info at: https://www.weatherapi.com/."
-	// docs.SwaggerInfo.Version = "1.0"
-	// // docs.SwaggerInfo.Host = os.Getenv("APP_URI")
-	// docs.SwaggerInfo.BasePath = "/api/v1"
-	// docs.SwaggerInfo.Schemes = []string{"http", "https"}
+  // programmatically set swagger info
+	docs.SwaggerInfo.Title = "Weather mobile app API"
+	docs.SwaggerInfo.Description = "Interface between the app and the Weather API. More info at: https://www.weatherapi.com/."
+	docs.SwaggerInfo.Version = "1.0"
+	// docs.SwaggerInfo.Host = os.Getenv("APP_URI")
+	docs.SwaggerInfo.BasePath = "/api/v1"
+	docs.SwaggerInfo.Schemes = []string{"http", "https"}
 
   log.Println("GOROOT:", runtime.GOROOT())
   // // use ginSwagger middleware to serve the API docs
@@ -47,7 +48,7 @@ func main() {
     c.JSON(http.StatusOK, response)
   })
   // router.GET("/", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	// router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
   api := router.Group("/api/v1")
   routes.Init(api)
