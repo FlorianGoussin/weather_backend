@@ -1,1 +1,1 @@
-web: ./weather-backend
+web: bin/weather-backend
