@@ -7,7 +7,8 @@ import (
 	"os"
 	"time"
 
-	database "floriangoussin.com/weather-backend/database"
+	"floriangoussin.com/weather-backend/database"
+	mongodb "floriangoussin.com/weather-backend/database"
 	jwt "github.com/dgrijalva/jwt-go"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -104,7 +105,7 @@ func UpdateAllTokens(signedToken string, signedRefreshToken string, userId strin
 		Upsert: &upsert,
 	}
 
-	userCollection := database.GetCollection(database.Client, "user")
+	userCollection := mongodb.Database.Collection(database.USERS_COLLECTION)
 	_, err := userCollection.UpdateOne(
 		ctx,
 		filter,

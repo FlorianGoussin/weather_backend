@@ -22,5 +22,10 @@ func Protected(api *gin.RouterGroup) {
 	{
 		// Return city suggestions based on the search terms
 		protectedGroup.GET("/cities", controllers.Autocomplete)
+
+		// Current weather by location
+		// protectedGroup.GET("/currentWeather", controllers.GetAllCurrentWeatherByLocation())
+		protectedGroup.POST("/currentWeather", controllers.AddCurrentWeatherByCity())
+		// protectedGroup.DELETE("/currentWeather", controllers.RemoveCurrentWeatherByLocation())
 	}
 }

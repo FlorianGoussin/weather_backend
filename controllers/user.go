@@ -7,6 +7,7 @@ import (
 	"time"
 
 	database "floriangoussin.com/weather-backend/database"
+	mongodb "floriangoussin.com/weather-backend/database"
 	helper "floriangoussin.com/weather-backend/helpers"
 	models "floriangoussin.com/weather-backend/models"
 	"github.com/gin-gonic/gin"
@@ -50,7 +51,7 @@ func VerifyPassword(userPassword string, providedPassword string) (bool, string)
 // @Failure      500  {string} http.StatusInternalServerError "Internal Server Error"
 // @Router       /register [get]
 func Register(c *gin.Context) {
-	userCollection := database.GetCollection(database.Client, "user")
+	userCollection := mongodb.Database.Collection(database.USERS_COLLECTION)
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 	
@@ -108,7 +109,7 @@ func Register(c *gin.Context) {
 // @Failure 500 {string} http.StatusInternalServerError "Internal Server Error"
 // @Router /login [post]
 func Login(c *gin.Context) {
-	userCollection := database.GetCollection(database.Client, "user")
+	userCollection := mongodb.Database.Collection(database.USERS_COLLECTION)
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 
@@ -119,7 +120,7 @@ func Login(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 	}
-
+	// Find user with provided email address
 	err := userCollection.FindOne(ctx, bson.M{"email": user.Email}).Decode(&foundUser)
 	if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "email or password is incorrect"})

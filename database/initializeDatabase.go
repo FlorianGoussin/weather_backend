@@ -13,16 +13,15 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-const COLLECTION_NAME = "Cities"
 const DATA_FILE = "data.json"
 
 // Create Weather database if there is none
 func Initialize(client *mongo.Client) *mongo.Database {
 	databaseName := os.Getenv("DATABASE_NAME")
 	database := client.Database(databaseName)
-	collectionExists := CollectionExists(database, COLLECTION_NAME)
+	collectionExists := CollectionExists(database, CITIES_COLLECTION)
 	if !collectionExists {
-		collection := database.Collection(COLLECTION_NAME)
+		collection := database.Collection(CITIES_COLLECTION)
 
 		// Insert cities from json file
 		err = insertCitiesFromDataset(collection)
@@ -55,7 +54,7 @@ func insertCitiesFromDataset(collection *mongo.Collection) error {
 	// Convert slice of City to slice of interface{}
 	var cityInterfaces []interface{}
 	for _, city := range cities {
-			cityInterfaces = append(cityInterfaces, city)
+		cityInterfaces = append(cityInterfaces, city)
 	}
 	// Insert cities into MongoDB
 	_, err = collection.InsertMany(context.Background(), cityInterfaces)

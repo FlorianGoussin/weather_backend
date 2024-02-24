@@ -1,6 +1,9 @@
 package models
 
+import "go.mongodb.org/mongo-driver/bson/primitive"
+
 type City struct {
-	Name string `json:"name"`
-	Country string `json:"country"`
+	ID          primitive.ObjectID `bson:"_id,omitempty"`
+	Name        *string            `json:"name" validate:"required"`
+	Country     *string            `json:"country" validate:"required"`
 }

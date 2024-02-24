@@ -37,7 +37,7 @@ type SuccessResponse struct {
 // @Router       /cities [get]
 func Autocomplete(c *gin.Context) {
 	client := database.Client
-  citiesCollection := client.Database("Weather").Collection("Cities")
+  citiesCollection := client.Database("Weather").Collection(database.CITIES_COLLECTION)
 
   searchTerm := c.Query("searchTerm")
   log.Println("handleAutocomplete searchTerm", searchTerm)

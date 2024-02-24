@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -13,6 +12,7 @@ import (
 var (
 	err error
 	Client *mongo.Client
+	Database *mongo.Database
 )
 
 func isRunningInContainer() bool {
@@ -46,19 +46,10 @@ func Connect() {
 		log.Fatal(err) 
 	}
 	Client = client
+	databaseName := os.Getenv("DATABASE_NAME")
+	Database = client.Database(databaseName)
 }
 
 func Disconnect() {
 	Client.Disconnect(context.Background())
-}
-
-func GetCollection(client *mongo.Client, collectionName string) *mongo.Collection {
-	databaseName := os.Getenv("DATABASE_NAME")
-	var collection *mongo.Collection = client.Database(databaseName).Collection(collectionName)
-	return collection
-}
-
-func CollectionExists(db *mongo.Database, collectionName string) bool {
-	coll, _ := db.ListCollectionNames(context.Background(), bson.D{{Key: "name", Value: collectionName}})
-	return len(coll) == 1
 }
