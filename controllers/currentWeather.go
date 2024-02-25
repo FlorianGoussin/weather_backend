@@ -7,8 +7,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"floriangoussin.com/weather-backend/database"
 	m "floriangoussin.com/weather-backend/models"
@@ -16,10 +18,15 @@ import (
 )
 
 // Handlers functions
-// func GetAllCurrentWeatherByCity() gin.HandlerFunc { return getAllCurrentWeatherByCity }
+func GetAllCurrentWeatherByCity() gin.HandlerFunc { return getAllCurrentWeatherByCity }
 func AddCurrentWeatherByCity() gin.HandlerFunc { return addCurrentWeatherByCity }
 func RemoveCurrentWeatherByCity() gin.HandlerFunc { return removeCurrentWeatherByCity }
 
+// WeatherResult struct to hold the result of weather request
+type WeatherResult struct {
+	Data  m.WeatherData
+	Error error
+}
 
 // @Summary      Get all current weather by location entries
 // @Description  Get all current weather by location entries
@@ -28,68 +35,125 @@ func RemoveCurrentWeatherByCity() gin.HandlerFunc { return removeCurrentWeatherB
 // @Produce      json
 // @Success      200  {string} string "Successfully returned all the current weather by location entries"
 // @Router       /register [get]
-// func getAllCurrentWeatherByCity(c *gin.Context) {
-// 	token := c.GetHeader("token")
+func getAllCurrentWeatherByCity(c *gin.Context) {
+	// Using the JWT token find user
+	token := c.Request.Header.Get("token")
+	usersCollection := database.Database.Collection(database.USERS_COLLECTION)
 
-// log.Println("getAllCurrentWeatherByCity user token", token)
-// 	db := mongodb.Database
-// 	userCollection := db.Collection(mongodb.USERS_COLLECTION)
+	var user m.User
+	userTokenFilter := bson.M{"token": token}
+	err := usersCollection.FindOne(context.Background(), userTokenFilter).Decode(&user); 
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+	}
 
-// 	// Use the token to find the corresponding user document
-// 	filter := bson.M{"token": token}
+	// Convert user city IDs to ObjectIDs
+	var objectIDs []primitive.ObjectID
+	for _, cityID := range user.Cities {
+			objID, err := primitive.ObjectIDFromHex(cityID)
+			if err != nil {
+					log.Printf("Invalid ObjectID: %v", err)
+					continue
+			}
+			objectIDs = append(objectIDs, objID)
+	}
 
-// 	var user m.User
-// 	err := userCollection.FindOne(context.Background(), filter).Decode(&user)
-// 	if err != nil {
-// 			c.JSON(500, gin.H{"error": "Error finding user"})
-// 			return
-// 	}
-// 	collectionExists := mongodb.CollectionExists(db, "userLocation")
-// 	if !collectionExists {
-// 		c.JSON(500, gin.H{"error": "No userLocation collection found"})
-// 		return
-// 	}
-// 	log.Println("getAllCurrentWeatherByLocation collectionExists true!")
-// 	// Perform aggregation to join User, UserLocation, and Location collections
-// 	userLocationCollection := db.Collection("userLocation")
-// 	pipeline := mongo.Pipeline{
-// 		bson.D{{"$match", bson.D{{"location_id", user.ID}}}},
-// 		bson.D{{"$lookup", bson.D{
-// 				{"from", "location"},
-// 				{"let", bson.D{
-// 						{"location_id", "$location_id"},
-// 				}},
-// 				{"pipeline", bson.A{
-// 						bson.D{{"$match", bson.D{
-// 								{"$expr", bson.D{
-// 										{"$eq", bson.A{"$location_id", "$$location_id"}},
-// 								}},
-// 						}}},
-// 				}},
-// 				{"as", "locations"},
-// 		}}},
-// 		bson.D{{"$unwind", "$locations"}},
-// 		bson.D{{"$replaceRoot", bson.D{
-// 				{"newRoot", "$locations"},
-// 		}}},
-// 	}
-	
-// 	cursor, err := userLocationCollection.Aggregate(context.Background(), pipeline)
-// 	if err != nil {
-// 			c.JSON(500, gin.H{"error": "Error aggregating user locations"})
-// 			return
-// 	}
+	// Check if there are any valid ObjectIDs to search for
+	if len(objectIDs) == 0 {
+		log.Println("No valid ObjectIDs to search for.")
+		return
+	}
 
-// 	var locations []m.City
-//     err = cursor.All(context.Background(), &locations)
-//     if err != nil {
-//         c.JSON(500, gin.H{"error": "Error decoding user locations"})
-//         return
-//     }
+	// Define filter to find cities by IDs
+	filter := bson.M{"_id": bson.M{"$in": objectIDs}}
 
-//     // At this point, 'locations' contains details of all user locations
-//     c.JSON(200, locations)
-// }
+	citiesCollection := database.Database.Collection(database.CITIES_COLLECTION)
+	cursor, err := citiesCollection.Find(context.Background(), filter)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer cursor.Close(context.Background())
+
+	// Iterate over the cursor and decode results
+	var cities []m.City
+	if err := cursor.All(context.Background(), &cities); err != nil {
+			log.Fatal(err)
+	}
+
+	weatherApiKey := os.Getenv("WEATHER_API_KEY")
+	weatherApiUrl := os.Getenv("WEATHER_API_URL")
+
+	var wg sync.WaitGroup
+	wg.Add(len(cities))
+
+	results := make(chan WeatherResult, len(cities))
+
+	for _, city := range cities {
+		go func(city m.City) {
+			defer wg.Done()
+			currentWeatherUrl := fmt.Sprintf("%s/current.json?key=%s&q=%s&aqi=no", weatherApiUrl, weatherApiKey, *city.Name)
+			
+			// Get the current weather for the city
+			response, err := http.Get(currentWeatherUrl)
+			if err != nil {
+				results <- WeatherResult{Error: fmt.Errorf("HTTP request failed with status code %d", response.StatusCode)}
+			}
+			defer response.Body.Close()
+
+			var weatherData m.WeatherData
+			if err := json.NewDecoder(response.Body).Decode(&weatherData); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse the response body"})
+				return
+			}
+			log.Println("weatherData", weatherData)
+			// Send the weather data through the channel
+			results <- WeatherResult{Data: weatherData}
+		}(city)
+	}
+
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	// Collect results from the channel
+	var weatherResults []WeatherResult
+	for result := range results {
+		if result.Error != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+				return
+		}
+		weatherResults = append(weatherResults, result)
+		// Check if all results are collected
+		if len(weatherResults) == len(cities) {
+				break
+		}
+	}
+
+	// // Collect results from the channel
+	// for result := range results {
+	// 	if result.Error != nil {
+	// 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+	// 		return
+	// 	}
+	// }
+	// log.Println("Get the weather results...")
+	// // Collect results from the channel
+	// var weatherResults []WeatherResult
+	// for result := range results {
+	// 	if result.Error != nil {
+	// 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+	// 		return
+	// 	}
+	// 	weatherResults = append(weatherResults, result)
+	// 	// Check if all results are collected
+  //   if len(weatherResults) == len(cities) {
+	// 		break
+	// 	}
+	// }
+	log.Println("weatherResults", weatherResults)
+	c.JSON(http.StatusOK, weatherResults)
+}
 
 // @Summary      Add Current Weather using location and user information
 // @Description  Add Current Weather using location and user information
@@ -99,7 +163,7 @@ func RemoveCurrentWeatherByCity() gin.HandlerFunc { return removeCurrentWeatherB
 // @Param        city body string true
 // @Param        country body string true
 // @Success      200  {string} string "Successfully returned all the current weather by location entries"
-// @Router       /register [post]
+// @Router       /currentWeather [post]
 func addCurrentWeatherByCity(c *gin.Context) {
 	var city m.City
 	if err := c.BindJSON(&city); err != nil {
@@ -117,7 +181,7 @@ func addCurrentWeatherByCity(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 	}
-	
+
 	if userHasCity(&user, city.ID.Hex()) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "User already has this city"})
 		return
@@ -134,12 +198,12 @@ func addCurrentWeatherByCity(c *gin.Context) {
 			return
 	}
 
+	// Get the current weather for the city
 	weatherApiKey := os.Getenv("WEATHER_API_KEY") // Replace this with your WeatherAPI key
 	weatherApiUrl := os.Getenv("WEATHER_API_URL") // Replace this with your WeatherAPI key
 
 	currentWeatherUrl := fmt.Sprintf("%s/current.json?key=%s&q=%s&aqi=no", weatherApiUrl, weatherApiKey, *city.Name)
 
-	// Get the current weather for the city
 	response, err := http.Get(currentWeatherUrl)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -163,11 +227,16 @@ func addCurrentWeatherByCity(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 
+// @Summary      Remove Current Weather location from user
+// @Description  Add Current Weather using location and user information
+// @Tags         add current weather location
+// @Accept       json
+// @Produce      json
+// @Param        city body string true
+// @Param        country body string true
+// @Success      200  {string} string "Successfully returned all the current weather by location entries"
 // @Router       /currentWeather [delete]
 func removeCurrentWeatherByCity(c *gin.Context) {
-	// Input: location city and country
-	// Output: location id
-	// Extract city data from the request or any other source
 	var cityToRemove m.City
 	if err := c.BindJSON(&cityToRemove); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -196,8 +265,18 @@ func removeCurrentWeatherByCity(c *gin.Context) {
 					updatedCityIds = append(updatedCityIds, userCityId)
 			}
 	}
+
+	update := bson.M{"$set": bson.M{"cities": updatedCityIds}}
+	_, err = usersCollection.UpdateOne(context.Background(), userTokenFilter, update)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, "city deleted")
 }
 
+// Check if a user has a city id
 func userHasCity(user *m.User, cityId string) bool {
 	if user.Cities == nil || len(user.Cities) == 0{
 		return false

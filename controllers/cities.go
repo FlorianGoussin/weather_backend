@@ -36,8 +36,7 @@ type SuccessResponse struct {
 // @Failure      500  {object}  Error
 // @Router       /cities [get]
 func Autocomplete(c *gin.Context) {
-	client := database.Client
-  citiesCollection := client.Database("Weather").Collection(database.CITIES_COLLECTION)
+  citiesCollection := database.Database.Collection(database.CITIES_COLLECTION)
 
   searchTerm := c.Query("searchTerm")
   log.Println("handleAutocomplete searchTerm", searchTerm)
@@ -57,8 +56,6 @@ func Autocomplete(c *gin.Context) {
   defer cursor.Close(context.Background())
 
   // Decode results
-  log.Println("Number of results:", cursor.RemainingBatchLength())
-	// var results []bson.M
 	var results []models.City
 	if err := cursor.All(context.Background(), &results); err != nil {
 		log.Fatal(err)
