@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	database "floriangoussin.com/weather-backend/database"
 	mongodb "floriangoussin.com/weather-backend/database"
 	helper "floriangoussin.com/weather-backend/helpers"
 	models "floriangoussin.com/weather-backend/models"
@@ -51,7 +50,7 @@ func VerifyPassword(userPassword string, providedPassword string) (bool, string)
 // @Failure      500  {string} http.StatusInternalServerError "Internal Server Error"
 // @Router       /register [get]
 func Register(c *gin.Context) {
-	userCollection := mongodb.Database.Collection(database.USERS_COLLECTION)
+	userCollection := mongodb.Database.Collection(mongodb.USERS_COLLECTION)
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 	
@@ -109,7 +108,7 @@ func Register(c *gin.Context) {
 // @Failure 500 {string} http.StatusInternalServerError "Internal Server Error"
 // @Router /login [post]
 func Login(c *gin.Context) {
-	userCollection := mongodb.Database.Collection(database.USERS_COLLECTION)
+	userCollection := mongodb.Database.Collection(mongodb.USERS_COLLECTION)
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 
