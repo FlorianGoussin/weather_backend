@@ -28,6 +28,11 @@ type WeatherResult struct {
 	Error error
 }
 
+var (
+	weatherApiKey string
+	weatherApiUrl string
+)
+
 // @Summary      Get all current weather by location entries
 // @Description  Get all current weather by location entries
 // @Tags         current weather location
@@ -36,6 +41,9 @@ type WeatherResult struct {
 // @Success      200  {string} string "Successfully returned all the current weather by location entries"
 // @Router       /register [get]
 func getAllCurrentWeatherByCity(c *gin.Context) {
+	weatherApiKey = os.Getenv("WEATHER_API_KEY")
+	weatherApiUrl = os.Getenv("WEATHER_API_URL")
+
 	// Using the JWT token find user
 	token := c.Request.Header.Get("token")
 	usersCollection := database.Database.Collection(database.USERS_COLLECTION)
@@ -80,35 +88,13 @@ func getAllCurrentWeatherByCity(c *gin.Context) {
 			log.Fatal(err)
 	}
 
-	weatherApiKey := os.Getenv("WEATHER_API_KEY")
-	weatherApiUrl := os.Getenv("WEATHER_API_URL")
-
 	var wg sync.WaitGroup
 	wg.Add(len(cities))
 
 	results := make(chan WeatherResult, len(cities))
 
 	for _, city := range cities {
-		go func(city m.City) {
-			defer wg.Done()
-			currentWeatherUrl := fmt.Sprintf("%s/current.json?key=%s&q=%s&aqi=no", weatherApiUrl, weatherApiKey, *city.Name)
-			
-			// Get the current weather for the city
-			response, err := http.Get(currentWeatherUrl)
-			if err != nil {
-				results <- WeatherResult{Error: fmt.Errorf("HTTP request failed with status code %d", response.StatusCode)}
-			}
-			defer response.Body.Close()
-
-			var weatherData m.WeatherData
-			if err := json.NewDecoder(response.Body).Decode(&weatherData); err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse the response body"})
-				return
-			}
-			log.Println("weatherData", weatherData)
-			// Send the weather data through the channel
-			results <- WeatherResult{Data: weatherData}
-		}(city)
+		fetchWeatherData(city, results, &wg)
 	}
 
 	go func() {
@@ -130,29 +116,31 @@ func getAllCurrentWeatherByCity(c *gin.Context) {
 		}
 	}
 
-	// // Collect results from the channel
-	// for result := range results {
-	// 	if result.Error != nil {
-	// 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
-	// 		return
-	// 	}
-	// }
-	// log.Println("Get the weather results...")
-	// // Collect results from the channel
-	// var weatherResults []WeatherResult
-	// for result := range results {
-	// 	if result.Error != nil {
-	// 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
-	// 		return
-	// 	}
-	// 	weatherResults = append(weatherResults, result)
-	// 	// Check if all results are collected
-  //   if len(weatherResults) == len(cities) {
-	// 		break
-	// 	}
-	// }
-	log.Println("weatherResults", weatherResults)
 	c.JSON(http.StatusOK, weatherResults)
+}
+
+// This function will be called as a go subroutine
+func fetchWeatherData(city m.City, results chan<- WeatherResult, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	currentWeatherUrl := fmt.Sprintf("%s/current.json?key=%s&q=%s&aqi=no", weatherApiUrl, weatherApiKey, *city.Name)
+
+	// Get the current weather for the city
+	response, err := http.Get(currentWeatherUrl)
+	if err != nil {
+			results <- WeatherResult{Error: fmt.Errorf("HTTP request failed with status code %d", response.StatusCode)}
+			return
+	}
+	defer response.Body.Close()
+
+	var weatherData m.WeatherData
+	if err := json.NewDecoder(response.Body).Decode(&weatherData); err != nil {
+			results <- WeatherResult{Error: fmt.Errorf("Failed to parse the response body: %v", err)}
+			return
+	}
+
+	// Send the weather data through the channel
+	results <- WeatherResult{Data: weatherData}
 }
 
 // @Summary      Add Current Weather using location and user information
@@ -165,6 +153,9 @@ func getAllCurrentWeatherByCity(c *gin.Context) {
 // @Success      200  {string} string "Successfully returned all the current weather by location entries"
 // @Router       /currentWeather [post]
 func addCurrentWeatherByCity(c *gin.Context) {
+	weatherApiKey = os.Getenv("WEATHER_API_KEY")
+	weatherApiUrl = os.Getenv("WEATHER_API_URL")
+
 	var city m.City
 	if err := c.BindJSON(&city); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -199,11 +190,7 @@ func addCurrentWeatherByCity(c *gin.Context) {
 	}
 
 	// Get the current weather for the city
-	weatherApiKey := os.Getenv("WEATHER_API_KEY") // Replace this with your WeatherAPI key
-	weatherApiUrl := os.Getenv("WEATHER_API_URL") // Replace this with your WeatherAPI key
-
 	currentWeatherUrl := fmt.Sprintf("%s/current.json?key=%s&q=%s&aqi=no", weatherApiUrl, weatherApiKey, *city.Name)
-
 	response, err := http.Get(currentWeatherUrl)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
