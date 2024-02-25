@@ -135,7 +135,7 @@ func fetchWeatherData(city m.City, results chan<- WeatherResult, wg *sync.WaitGr
 
 	var weatherData m.WeatherData
 	if err := json.NewDecoder(response.Body).Decode(&weatherData); err != nil {
-			results <- WeatherResult{Error: fmt.Errorf("Failed to parse the response body: %v", err)}
+			results <- WeatherResult{Error: fmt.Errorf("failed to parse the response body: %v", err)}
 			return
 	}
 
