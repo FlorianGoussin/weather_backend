@@ -53,6 +53,137 @@ const docTemplate = `{
                 }
             }
         },
+        "/currentWeather": {
+            "get": {
+                "description": "Retrieve current weather data for all cities associated with the user",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get all current weather by city",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization Token",
+                        "name": "token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.WeatherData"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Add Current Weather location for user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "add current weather location"
+                ],
+                "summary": "Add Current Weather location for user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization Token",
+                        "name": "token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "city name",
+                        "name": "city",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    {
+                        "description": "country name",
+                        "name": "country",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully added current weather location",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Add Current Weather using location and user information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "add current weather location"
+                ],
+                "summary": "Remove Current Weather location from user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization Token",
+                        "name": "token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "city name",
+                        "name": "city",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    {
+                        "description": "country name",
+                        "name": "country",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully returned all the current weather by location entries",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/login": {
             "post": {
                 "description": "Logs in a registered user and generates tokens",
@@ -199,8 +330,15 @@ const docTemplate = `{
         },
         "models.City": {
             "type": "object",
+            "required": [
+                "country",
+                "name"
+            ],
             "properties": {
                 "country": {
+                    "type": "string"
+                },
+                "id": {
                     "type": "string"
                 },
                 "name": {
@@ -215,6 +353,12 @@ const docTemplate = `{
                 "password"
             ],
             "properties": {
+                "cities": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -225,7 +369,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "password": {
-                    "description": "Password *string ` + "`" + `json:\"password\" validate:\"required,min:6\"` + "`" + `",
                     "type": "string"
                 },
                 "refresh_token": {
@@ -239,6 +382,125 @@ const docTemplate = `{
                 },
                 "userId": {
                     "type": "string"
+                }
+            }
+        },
+        "models.WeatherData": {
+            "type": "object",
+            "properties": {
+                "current": {
+                    "type": "object",
+                    "properties": {
+                        "cloud": {
+                            "type": "integer"
+                        },
+                        "condition": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "integer"
+                                },
+                                "icon": {
+                                    "type": "string"
+                                },
+                                "text": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "feelslike_c": {
+                            "type": "number"
+                        },
+                        "feelslike_f": {
+                            "type": "number"
+                        },
+                        "gust_kph": {
+                            "type": "number"
+                        },
+                        "gust_mph": {
+                            "type": "number"
+                        },
+                        "humidity": {
+                            "type": "integer"
+                        },
+                        "is_day": {
+                            "type": "integer"
+                        },
+                        "last_updated": {
+                            "type": "string"
+                        },
+                        "last_updated_epoch": {
+                            "type": "integer"
+                        },
+                        "precip_in": {
+                            "type": "number"
+                        },
+                        "precip_mm": {
+                            "type": "number"
+                        },
+                        "pressure_in": {
+                            "type": "number"
+                        },
+                        "pressure_mb": {
+                            "type": "number"
+                        },
+                        "temp_c": {
+                            "type": "number"
+                        },
+                        "temp_f": {
+                            "type": "number"
+                        },
+                        "uv": {
+                            "type": "number"
+                        },
+                        "vis_km": {
+                            "type": "number"
+                        },
+                        "vis_miles": {
+                            "type": "number"
+                        },
+                        "wind_degree": {
+                            "type": "integer"
+                        },
+                        "wind_dir": {
+                            "type": "string"
+                        },
+                        "wind_kph": {
+                            "type": "number"
+                        },
+                        "wind_mph": {
+                            "type": "number"
+                        }
+                    }
+                },
+                "location": {
+                    "type": "object",
+                    "properties": {
+                        "country": {
+                            "type": "string"
+                        },
+                        "lat": {
+                            "type": "number"
+                        },
+                        "localtime": {
+                            "type": "string"
+                        },
+                        "localtime_epoch": {
+                            "type": "integer"
+                        },
+                        "lon": {
+                            "type": "number"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "region": {
+                            "type": "string"
+                        },
+                        "tz_id": {
+                            "type": "string"
+                        }
+                    }
                 }
             }
         }
