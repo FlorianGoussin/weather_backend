@@ -33,8 +33,8 @@ var (
 	weatherApiUrl string
 )
 
-// @Summary      Get all current weather by location entries
-// @Description  Get all current weather by location entries
+// @Summary      Get current weather entries using user cities entries
+// @Description  Get current weather entries using user cities entries
 // @Tags         current weather location
 // @Accept       json
 // @Produce      json
@@ -148,8 +148,8 @@ func fetchWeatherData(city m.City, results chan<- WeatherResult, wg *sync.WaitGr
 // @Tags         add current weather location
 // @Accept       json
 // @Produce      json
-// @Param        city body string true
-// @Param        country body string true
+// @Param        city body string true "city name"
+// @Param        country body string true "country name"
 // @Success      200  {string} string "Successfully returned all the current weather by location entries"
 // @Router       /currentWeather [post]
 func addCurrentWeatherByCity(c *gin.Context) {
@@ -215,12 +215,12 @@ func addCurrentWeatherByCity(c *gin.Context) {
 }
 
 // @Summary      Remove Current Weather location from user
-// @Description  Add Current Weather using location and user information
-// @Tags         add current weather location
+// @Description  Remove Current Weather using location and user information
+// @Tags         remove current weather location
 // @Accept       json
 // @Produce      json
-// @Param        city body string true
-// @Param        country body string true
+// @Param        city body string true "city name"
+// @Param        country body string true "country name"
 // @Success      200  {string} string "Successfully returned all the current weather by location entries"
 // @Router       /currentWeather [delete]
 func removeCurrentWeatherByCity(c *gin.Context) {
