@@ -240,7 +240,7 @@ const docTemplate = `{
             }
         },
         "/register": {
-            "get": {
+            "post": {
                 "description": "Register a new user with email and password",
                 "consumes": [
                     "application/json"

@@ -48,7 +48,7 @@ func VerifyPassword(userPassword string, providedPassword string) (bool, string)
 // @Success      200  {string} string "Successfully registered, inserted document ID returned"
 // @Failure      400  {string} http.StatusBadRequest "Bad request"
 // @Failure      500  {string} http.StatusInternalServerError "Internal Server Error"
-// @Router       /register [get]
+// @Router       /register [post]
 func Register(c *gin.Context) {
 	userCollection := mongodb.Database.Collection(mongodb.USERS_COLLECTION)
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)

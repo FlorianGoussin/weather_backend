@@ -207,7 +207,7 @@ paths:
             type: string
       summary: Login a user
   /register:
-    get:
+    post:
       consumes:
       - application/json
       description: Register a new user with email and password
