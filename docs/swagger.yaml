@@ -89,6 +89,11 @@ paths:
       - application/json
       description: Remove Current Weather using location and user information
       parameters:
+      - description: User JWT Token
+        in: header
+        name: token
+        required: true
+        type: string
       - description: city name
         in: body
         name: city
@@ -111,11 +116,36 @@ paths:
       summary: Remove Current Weather location from user
       tags:
       - remove current weather location
+    get:
+      consumes:
+      - application/json
+      description: Get current weather entries using user cities entries
+      parameters:
+      - description: User JWT Token
+        in: header
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully returned all the current weather by location entries
+          schema:
+            type: string
+      summary: Get current weather entries using user cities entries
+      tags:
+      - get all current weather
     post:
       consumes:
       - application/json
       description: Add Current Weather using location and user information
       parameters:
+      - description: User JWT Token
+        in: header
+        name: token
+        required: true
+        type: string
       - description: city name
         in: body
         name: city

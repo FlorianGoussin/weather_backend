@@ -54,6 +54,36 @@ const docTemplate = `{
             }
         },
         "/currentWeather": {
+            "get": {
+                "description": "Get current weather entries using user cities entries",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "get all current weather"
+                ],
+                "summary": "Get current weather entries using user cities entries",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User JWT Token",
+                        "name": "token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully returned all the current weather by location entries",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Add Current Weather using location and user information",
                 "consumes": [
@@ -67,6 +97,13 @@ const docTemplate = `{
                 ],
                 "summary": "Add Current Weather using location and user information",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User JWT Token",
+                        "name": "token",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "description": "city name",
                         "name": "city",
@@ -108,6 +145,13 @@ const docTemplate = `{
                 ],
                 "summary": "Remove Current Weather location from user",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User JWT Token",
+                        "name": "token",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "description": "city name",
                         "name": "city",

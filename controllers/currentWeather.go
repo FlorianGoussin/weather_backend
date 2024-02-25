@@ -35,11 +35,12 @@ var (
 
 // @Summary      Get current weather entries using user cities entries
 // @Description  Get current weather entries using user cities entries
-// @Tags         current weather location
+// @Tags         get all current weather
 // @Accept       json
 // @Produce      json
+// @Param        token header string true "User JWT Token"
 // @Success      200  {string} string "Successfully returned all the current weather by location entries"
-// @Router       /register [get]
+// @Router       /currentWeather [get]
 func getAllCurrentWeatherByCity(c *gin.Context) {
 	weatherApiKey = os.Getenv("WEATHER_API_KEY")
 	weatherApiUrl = os.Getenv("WEATHER_API_URL")
@@ -141,6 +142,7 @@ func fetchWeatherData(city m.City, results chan<- WeatherResult, wg *sync.WaitGr
 // @Tags         add current weather location
 // @Accept       json
 // @Produce      json
+// @Param        token header string true "User JWT Token"
 // @Param        city body string true "city name"
 // @Param        country body string true "country name"
 // @Success      200  {string} string "Successfully returned all the current weather by location entries"
@@ -212,6 +214,7 @@ func addCurrentWeatherByCity(c *gin.Context) {
 // @Tags         remove current weather location
 // @Accept       json
 // @Produce      json
+// @Param        token header string true "User JWT Token"
 // @Param        city body string true "city name"
 // @Param        country body string true "country name"
 // @Success      200  {string} string "Successfully returned all the current weather by location entries"
