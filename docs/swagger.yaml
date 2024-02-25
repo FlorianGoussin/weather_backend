@@ -206,6 +206,8 @@ paths:
           schema:
             type: string
       summary: Login a user
+      tags:
+      - login mobile app user
   /register:
     post:
       consumes:

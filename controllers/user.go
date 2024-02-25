@@ -98,6 +98,7 @@ func Register(c *gin.Context) {
 
 // @Summary Login a user
 // @Description Logs in a registered user and generates tokens
+// @Tags         login mobile app user
 // @Accept json
 // @Produce json
 // @Param email body string true "User's email address"

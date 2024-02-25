@@ -190,6 +190,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "login mobile app user"
+                ],
                 "summary": "Login a user",
                 "parameters": [
                     {
