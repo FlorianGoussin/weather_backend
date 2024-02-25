@@ -65,38 +65,31 @@ func getAllCurrentWeatherByCity(c *gin.Context) {
 			}
 			objectIDs = append(objectIDs, objID)
 	}
-
-	// Check if there are any valid ObjectIDs to search for
 	if len(objectIDs) == 0 {
 		log.Println("No valid ObjectIDs to search for.")
 		return
 	}
 
-	// Define filter to find cities by IDs
-	filter := bson.M{"_id": bson.M{"$in": objectIDs}}
-
+	filter := bson.M{"_id": bson.M{"$in": objectIDs}} // find cities by IDs
 	citiesCollection := database.Database.Collection(database.CITIES_COLLECTION)
 	cursor, err := citiesCollection.Find(context.Background(), filter)
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer cursor.Close(context.Background())
+	if err != nil {
+			log.Fatal(err)
+	}
+	defer cursor.Close(context.Background())
 
-	// Iterate over the cursor and decode results
 	var cities []m.City
 	if err := cursor.All(context.Background(), &cities); err != nil {
 			log.Fatal(err)
 	}
 
+	// Fetch current weather for all the cities
 	var wg sync.WaitGroup
 	wg.Add(len(cities))
-
 	results := make(chan WeatherResult, len(cities))
-
 	for _, city := range cities {
 		fetchWeatherData(city, results, &wg)
 	}
-
 	go func() {
 		wg.Wait()
 		close(results)
@@ -275,24 +268,3 @@ func userHasCity(user *m.User, cityId string) bool {
 	}
 	return false
 }
-
-// func getUserByToken(c *gin.Context, token string) (*m.User, error) {
-// 	userCollection := mongodb.Database.Collection(database.USERS_COLLECTION)
-// 	filter := bson.M{"token": token}
-
-// 	var user m.User
-// 	err := userCollection.FindOne(context.Background(), filter).Decode(&user); 
-// 	if err != nil {
-// 		if err == mongo.ErrNoDocuments {
-// 			return nil, m.Error{
-// 				Code:    http.StatusNotFound,
-// 				Message: "User not found",
-// 			}
-// 		}
-// 		return nil, m.Error{
-// 			Code:    http.StatusInternalServerError,
-// 			Message: err.Error(), // Pass the original error message
-// 		}
-// 	}
-// 	return &user, nil
-// }
