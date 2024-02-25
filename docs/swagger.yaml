@@ -55,84 +55,6 @@ definitions:
     - email
     - password
     type: object
-  models.WeatherData:
-    properties:
-      current:
-        properties:
-          cloud:
-            type: integer
-          condition:
-            properties:
-              code:
-                type: integer
-              icon:
-                type: string
-              text:
-                type: string
-            type: object
-          feelslike_c:
-            type: number
-          feelslike_f:
-            type: number
-          gust_kph:
-            type: number
-          gust_mph:
-            type: number
-          humidity:
-            type: integer
-          is_day:
-            type: integer
-          last_updated:
-            type: string
-          last_updated_epoch:
-            type: integer
-          precip_in:
-            type: number
-          precip_mm:
-            type: number
-          pressure_in:
-            type: number
-          pressure_mb:
-            type: number
-          temp_c:
-            type: number
-          temp_f:
-            type: number
-          uv:
-            type: number
-          vis_km:
-            type: number
-          vis_miles:
-            type: number
-          wind_degree:
-            type: integer
-          wind_dir:
-            type: string
-          wind_kph:
-            type: number
-          wind_mph:
-            type: number
-        type: object
-      location:
-        properties:
-          country:
-            type: string
-          lat:
-            type: number
-          localtime:
-            type: string
-          localtime_epoch:
-            type: integer
-          lon:
-            type: number
-          name:
-            type: string
-          region:
-            type: string
-          tz_id:
-            type: string
-        type: object
-    type: object
 info:
   contact: {}
 paths:
@@ -165,25 +87,20 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Add Current Weather using location and user information
+      description: Remove Current Weather using location and user information
       parameters:
-      - description: Authorization Token
-        in: header
-        name: token
-        required: true
-        type: string
       - description: city name
         in: body
         name: city
         required: true
         schema:
-          type: object
+          type: string
       - description: country name
         in: body
         name: country
         required: true
         schema:
-          type: object
+          type: string
       produces:
       - application/json
       responses:
@@ -193,60 +110,32 @@ paths:
             type: string
       summary: Remove Current Weather location from user
       tags:
-      - add current weather location
-    get:
-      description: Retrieve current weather data for all cities associated with the
-        user
-      parameters:
-      - description: Authorization Token
-        in: header
-        name: token
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/models.WeatherData'
-            type: array
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/controllers.Error'
-      summary: Get all current weather by city
+      - remove current weather location
     post:
       consumes:
       - application/json
-      description: Add Current Weather location for user
+      description: Add Current Weather using location and user information
       parameters:
-      - description: Authorization Token
-        in: header
-        name: token
-        required: true
-        type: string
       - description: city name
         in: body
         name: city
         required: true
         schema:
-          type: object
+          type: string
       - description: country name
         in: body
         name: country
         required: true
         schema:
-          type: object
+          type: string
       produces:
       - application/json
       responses:
         "200":
-          description: Successfully added current weather location
+          description: Successfully returned all the current weather by location entries
           schema:
             type: string
-      summary: Add Current Weather location for user
+      summary: Add Current Weather using location and user information
       tags:
       - add current weather location
   /login:
